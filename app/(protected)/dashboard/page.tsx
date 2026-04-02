@@ -1,16 +1,21 @@
 import Link from 'next/link'
 import { getUser, getProfile, getSubscription } from '@/lib/dal'
 import { getMonthlyMessageCount } from '@/app/actions/billing'
+import { getMessagesPerDay, getRecentActivity } from '@/app/actions/dashboard'
 import { MESSAGE_LIMIT } from '@/lib/constants'
+import { UsageChart } from './_components/usage-chart'
+import { ActivityFeed } from './_components/activity-feed'
 
 export const metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
-  const [user, profile, subscription, messageCount] = await Promise.all([
+  const [user, profile, subscription, messageCount, messagesPerDay, recentActivity] = await Promise.all([
     getUser(),
     getProfile(),
     getSubscription(),
     getMonthlyMessageCount(),
+    getMessagesPerDay(),
+    getRecentActivity(),
   ])
 
   const plan = subscription?.plan ?? 'free'
@@ -30,7 +35,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid gap-5 sm:grid-cols-2">
         {/* Plan card */}
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center gap-3">
@@ -76,22 +81,6 @@ export default async function DashboardPage() {
             <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Unlimited</p>
           )}
         </div>
-
-        {/* Account card */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50">
-              <svg className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Account</p>
-          </div>
-          <p className="mt-4 truncate text-sm font-semibold">{user?.email}</p>
-          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-            {profile?.display_name || 'No display name set'}
-          </p>
-        </div>
       </div>
 
       {/* Quick actions */}
@@ -129,6 +118,23 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
+        </div>
+      </div>
+
+      {/* Usage Overview */}
+      <div className="mt-8">
+        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Usage Overview</h2>
+        <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="mb-4 text-xs text-zinc-400 dark:text-zinc-500">Messages sent per day (last 14 days)</p>
+          <UsageChart data={messagesPerDay} />
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="mt-8">
+        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Recent Activity</h2>
+        <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <ActivityFeed events={recentActivity} />
         </div>
       </div>
     </div>

@@ -36,6 +36,106 @@ export async function getMonthlyMessageCount(): Promise<number> {
   return data ?? 0
 }
 
+export async function getBillingPeriodUsage(): Promise<{
+  messageCount: number
+  conversationCount: number
+  periodStart: string
+  periodEnd: string
+}> {
+  const user = await verifySession()
+  const supabase = await createClient()
+
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('plan, current_period_start, current_period_end')
+    .eq('user_id', user.id)
+    .single()
+
+  let periodStart: string
+  let periodEnd: string
+
+  if (subscription?.plan === 'pro' && subscription.current_period_start && subscription.current_period_end) {
+    periodStart = subscription.current_period_start
+    periodEnd = subscription.current_period_end
+  } else {
+    const now = new Date()
+    periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+  }
+
+  // Count conversations in this period
+  const { count: conversationCount } = await supabase
+    .from('conversations')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', periodStart)
+    .lt('created_at', periodEnd)
+
+  // Count messages: get user's conversation IDs, then count messages in period
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('user_id', user.id)
+
+  let messageCount = 0
+  const conversationIds = (conversations ?? []).map((c) => c.id)
+  if (conversationIds.length > 0) {
+    const { count } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .in('conversation_id', conversationIds)
+      .eq('role', 'user')
+      .gte('created_at', periodStart)
+      .lt('created_at', periodEnd)
+    messageCount = count ?? 0
+  }
+
+  return {
+    messageCount,
+    conversationCount: conversationCount ?? 0,
+    periodStart,
+    periodEnd,
+  }
+}
+
+export type Invoice = {
+  id: string
+  date: number
+  amount: number
+  currency: string
+  status: string | null
+  pdfUrl: string | null
+}
+
+export async function getInvoices(): Promise<Invoice[]> {
+  const user = await verifySession()
+  const supabase = await createClient()
+
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('stripe_customer_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!subscription?.stripe_customer_id) {
+    return []
+  }
+
+  const invoices = await stripe.invoices.list({
+    customer: subscription.stripe_customer_id,
+    limit: 24,
+  })
+
+  return invoices.data.map((inv) => ({
+    id: inv.id,
+    date: inv.created,
+    amount: inv.amount_paid,
+    currency: inv.currency,
+    status: inv.status,
+    pdfUrl: inv.invoice_pdf ?? null,
+  }))
+}
+
 export async function createCheckoutSession(): Promise<string> {
   const user = await verifySession()
   const supabase = await createClient()

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { FadeInOnScroll } from "@/components/fade-in-on-scroll";
 
 export const metadata: Metadata = {
   title: "LaunchKit — Ship Your SaaS in Days, Not Months",
@@ -221,17 +222,43 @@ export default function Home() {
               View Demo
             </a>
           </div>
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-400 dark:text-zinc-500">
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-zinc-400 dark:text-zinc-500">
             <span>Built with</span>
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">Next.js 16</span>
-            <span aria-hidden="true">&middot;</span>
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">Supabase</span>
-            <span aria-hidden="true">&middot;</span>
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">Stripe</span>
-            <span aria-hidden="true">&middot;</span>
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">Claude AI</span>
-            <span aria-hidden="true">&middot;</span>
-            <span className="font-medium text-zinc-600 dark:text-zinc-300">TypeScript</span>
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 dark:text-zinc-400">
+                <path d="M6 2l12 18H6z" />
+              </svg>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Next.js</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 dark:text-zinc-400">
+                <ellipse cx="12" cy="5" rx="9" ry="3" />
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+              </svg>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Supabase</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 dark:text-zinc-400">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Stripe</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 dark:text-zinc-400">
+                <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+                <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" />
+              </svg>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Claude AI</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 dark:text-zinc-400">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">TypeScript</span>
+            </div>
           </div>
         </div>
       </section>
@@ -252,26 +279,165 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => (
-              <div
-                key={feature.name}
-                className="rounded-xl border border-zinc-200 bg-white p-6 transition-shadow duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] dark:border-zinc-800 dark:bg-zinc-950 dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
-                  {feature.icon}
+            {features.map((feature, i) => (
+              <FadeInOnScroll key={feature.name} delay={i * 75}>
+                <div className="h-full rounded-xl border border-zinc-200 bg-white p-6 transition-shadow duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] dark:border-zinc-800 dark:bg-zinc-950 dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                    {feature.icon}
+                  </div>
+                  <h3 className="mt-4 font-semibold">{feature.name}</h3>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="mt-4 font-semibold">{feature.name}</h3>
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  {feature.description}
-                </p>
-              </div>
+              </FadeInOnScroll>
             ))}
           </div>
         </div>
       </section>
 
+      {/* FAQ */}
+      <section id="faq" className="px-6 py-24">
+        <div className="mx-auto max-w-3xl">
+          <div className="text-center">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Frequently asked questions
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-zinc-600 dark:text-zinc-400">
+              Everything you need to know before you start building.
+            </p>
+          </div>
+          <div className="mt-16 space-y-4">
+            <details className="group rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium">
+                What&apos;s included in LaunchKit?
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
+                Authentication with email and Google OAuth, Stripe billing with
+                free and pro tiers, an AI-powered chat interface, a polished
+                dashboard with usage analytics, and a fully responsive landing
+                page. Everything is pre-wired and deployment-ready.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium">
+                What tech stack does this use?
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
+                Next.js 16 with the App Router and React Server Components,
+                Supabase for authentication and database, Stripe for payments,
+                the Vercel AI SDK with Claude for the chat feature, TypeScript in
+                strict mode, and Tailwind CSS v4 for styling.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium">
+                Can I customize everything?
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
+                Absolutely. You own the source code — there&apos;s no vendor
+                lock-in or proprietary framework. Swap out providers, restyle
+                components, add features, or strip out what you don&apos;t need.
+                It&apos;s your codebase to shape however you want.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium">
+                How does the AI chat work?
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
+                The chat connects to Claude through the Vercel AI SDK. Messages
+                stream in real-time, conversations are saved to your Supabase
+                database, and per-user usage is tracked automatically. The free
+                tier includes 100 messages per month with unlimited on Pro.
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium">
+                How is billing handled?
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </summary>
+              <div className="px-6 pb-5 text-sm text-zinc-600 dark:text-zinc-400">
+                Stripe handles everything — checkout sessions, subscription
+                management, and webhooks are all pre-configured. Users can
+                upgrade, downgrade, or cancel through the Stripe Customer Portal.
+                Free and Pro tiers work out of the box.
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
-      <section id="pricing" className="px-6 py-24">
+      <section id="pricing" className="border-t border-zinc-200 px-6 py-24 dark:border-zinc-800">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -283,7 +449,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mx-auto mt-16 grid max-w-4xl gap-8 lg:grid-cols-2">
-            {tiers.map((tier) => {
+            {tiers.map((tier, i) => {
               const cardContent = (
                 <>
                   <div className="flex items-center justify-between">
@@ -326,30 +492,31 @@ export default function Home() {
 
               if (tier.highlighted) {
                 return (
-                  <div key={tier.name} className="relative rounded-xl p-px">
-                    <div
-                      className="absolute inset-0 rounded-xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #3b82f6, #8b5cf6, #3b82f6, #8b5cf6)",
-                        backgroundSize: "300% 300%",
-                        animation: "gradient-border 4s ease infinite",
-                      }}
-                    />
-                    <div className="relative rounded-xl bg-white p-8 dark:bg-zinc-950">
-                      {cardContent}
+                  <FadeInOnScroll key={tier.name} delay={i * 100}>
+                    <div className="relative rounded-xl p-px">
+                      <div
+                        className="absolute inset-0 rounded-xl"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #3b82f6, #8b5cf6, #3b82f6, #8b5cf6)",
+                          backgroundSize: "300% 300%",
+                          animation: "gradient-border 4s ease infinite",
+                        }}
+                      />
+                      <div className="relative rounded-xl bg-white p-8 dark:bg-zinc-950">
+                        {cardContent}
+                      </div>
                     </div>
-                  </div>
+                  </FadeInOnScroll>
                 );
               }
 
               return (
-                <div
-                  key={tier.name}
-                  className="rounded-xl border border-zinc-200 p-8 dark:border-zinc-800"
-                >
-                  {cardContent}
-                </div>
+                <FadeInOnScroll key={tier.name} delay={i * 100}>
+                  <div className="h-full rounded-xl border border-zinc-200 p-8 dark:border-zinc-800">
+                    {cardContent}
+                  </div>
+                </FadeInOnScroll>
               );
             })}
           </div>
@@ -361,6 +528,17 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <p className="text-sm text-zinc-500">
             &copy; 2026 LaunchKit. All rights reserved.
+          </p>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">
+            Built by{" "}
+            <a
+              href="https://utoker.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-500 underline underline-offset-2 hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              Umut Toker
+            </a>
           </p>
           <div className="flex gap-6">
             <Link
