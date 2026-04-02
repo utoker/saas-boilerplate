@@ -554,7 +554,7 @@ export default function Home() {
               Terms
             </Link>
             <Link
-              href="#"
+              href="https://github.com/utoker/saas-boilerplate"
               className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               GitHub
