@@ -15,6 +15,7 @@ A production-ready SaaS starter built with **Next.js 16**, **Supabase**, **Strip
 | AI | Claude via Vercel AI SDK (streaming) |
 | Styling | Tailwind CSS v4 |
 | Charts | Recharts |
+| Testing | Vitest + React Testing Library |
 | Deployment | Vercel |
 
 ## Features
@@ -78,6 +79,13 @@ lib/
 ├── supabase/                         # Supabase client helpers (server, client, admin, proxy)
 ├── stripe.ts                         # Stripe client
 └── types/                            # TypeScript types (database schema)
+
+tests/
+├── setup.ts                          # Global test setup (module mocks)
+└── mocks/                            # Shared mock factories
+    ├── supabase.ts                   #   Chainable Supabase query builder mock
+    ├── stripe.ts                     #   Stripe client mock
+    └── user.ts                       #   Test fixtures (user, conversation, etc.)
 ```
 
 ## Getting Started
@@ -140,6 +148,21 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
+## Testing
+
+The project uses **Vitest** with **React Testing Library** for unit and integration tests. Tests live next to source files in `__tests__/` directories.
+
+```bash
+npm run test              # Run all tests
+npm run test:coverage     # Run with coverage report
+```
+
+**What's tested:**
+- **Data Access Layer** — session verification, profile and subscription queries
+- **Server Actions** — chat CRUD, dashboard analytics (14-day usage aggregation), billing period logic
+- **Stripe Webhooks** — all three event types, status mapping, error handling
+- **Chat Interface** — input behavior, keyboard shortcuts, sidebar delete flow, message limits
+
 ## Scripts
 
 | Command | Description |
@@ -148,6 +171,8 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 | `npm run build` | Create production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run test` | Run tests |
+| `npm run test:coverage` | Run tests with coverage |
 
 ## License
 
