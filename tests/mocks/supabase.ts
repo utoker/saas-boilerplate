@@ -65,7 +65,7 @@ export function createMockSupabase() {
   }
 
   function mockRpc<T = unknown>(response: SupabaseResponse<T>) {
-    client.rpc.mockResolvedValue(response)
+    ;(client.rpc as ReturnType<typeof vi.fn>).mockResolvedValue(response)
   }
 
   return { client, mockFrom, mockRpc }
