@@ -24,6 +24,7 @@ export default async function ChatPage({
 
   return (
     <ChatInterface
+      key={params.conversation ?? 'new'}
       conversations={conversations}
       initialMessages={messages}
       activeConversationId={params.conversation ?? null}
