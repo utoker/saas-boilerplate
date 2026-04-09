@@ -18,7 +18,9 @@ export async function getSubscription(): Promise<Subscription | null> {
     .eq('user_id', user.id)
     .single()
 
-  return data
+  // Cast: plan/status are text columns at the DB level but the app enforces
+  // a closed set of values via Stripe webhook handlers.
+  return data as Subscription | null
 }
 
 export async function getMonthlyMessageCount(): Promise<number> {
@@ -63,36 +65,25 @@ export async function getBillingPeriodUsage(): Promise<{
     periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
   }
 
-  // Count conversations in this period
-  const { count: conversationCount } = await supabase
-    .from('conversations')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gte('created_at', periodStart)
-    .lt('created_at', periodEnd)
-
-  // Count messages: get user's conversation IDs, then count messages in period
-  const { data: conversations } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('user_id', user.id)
-
-  let messageCount = 0
-  const conversationIds = (conversations ?? []).map((c) => c.id)
-  if (conversationIds.length > 0) {
-    const { count } = await supabase
-      .from('messages')
+  // Single-round-trip count for each metric. Message count is done via an RPC
+  // so we don't have to ship every conversation id back to the server first.
+  const [conversationResult, messageResult] = await Promise.all([
+    supabase
+      .from('conversations')
       .select('*', { count: 'exact', head: true })
-      .in('conversation_id', conversationIds)
-      .eq('role', 'user')
+      .eq('user_id', user.id)
       .gte('created_at', periodStart)
-      .lt('created_at', periodEnd)
-    messageCount = count ?? 0
-  }
+      .lt('created_at', periodEnd),
+    supabase.rpc('count_user_messages_in_period', {
+      uid: user.id,
+      period_start: periodStart,
+      period_end: periodEnd,
+    }),
+  ])
 
   return {
-    messageCount,
-    conversationCount: conversationCount ?? 0,
+    messageCount: Number(messageResult.data ?? 0),
+    conversationCount: conversationResult.count ?? 0,
     periodStart,
     periodEnd,
   }

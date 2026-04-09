@@ -1,24 +1,24 @@
-'use client'
+'use client';
 
-import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
-import { useRef, useEffect, useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import type { UIMessage } from 'ai'
-import type { Conversation, Message, Plan } from '@/lib/types/database'
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import type { UIMessage } from 'ai';
+import type { Conversation, Message, Plan } from '@/lib/types/database';
 import {
   createConversation,
   deleteConversation,
   updateConversationTitle,
-} from '@/app/actions/chat'
-import { MessageBubble } from './message-bubble'
+} from '@/app/actions/chat';
+import { MessageBubble } from './message-bubble';
 
 function dbMessagesToUIMessages(dbMessages: Message[]): UIMessage[] {
   return dbMessages.map((msg) => ({
     id: msg.id,
     role: msg.role,
     parts: [{ type: 'text' as const, text: msg.content }],
-  }))
+  }));
 }
 
 export function ChatInterface({
@@ -29,40 +29,46 @@ export function ChatInterface({
   messageCount: initialMessageCount,
   messageLimit,
 }: {
-  conversations: Conversation[]
-  initialMessages: Message[]
-  activeConversationId: string | null
-  plan: Plan
-  messageCount: number
-  messageLimit: number
+  conversations: Conversation[];
+  initialMessages: Message[];
+  activeConversationId: string | null;
+  plan: Plan;
+  messageCount: number;
+  messageLimit: number;
 }) {
-  const router = useRouter()
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const [conversationId, _setConversationId] = useState(activeConversationId)
-  const conversationIdRef = useRef(activeConversationId)
+  const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [conversationId, _setConversationId] = useState(activeConversationId);
+  const conversationIdRef = useRef(activeConversationId);
   function setConversationId(id: string | null) {
-    conversationIdRef.current = id
-    _setConversationId(id)
+    conversationIdRef.current = id;
+    _setConversationId(id);
   }
-  const [conversations, setConversations] = useState(initialConversations)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [messageCount, setMessageCount] = useState(initialMessageCount)
-  const [limitReached, setLimitReached] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [inputEmpty, setInputEmpty] = useState(true)
-  const hasAutoTitled = useRef(false)
-  const isFree = plan === 'free'
-  const atLimit = isFree && messageCount >= messageLimit
+  const [conversations, setConversations] = useState(initialConversations);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [messageCount, setMessageCount] = useState(initialMessageCount);
+  const [limitReached, setLimitReached] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [inputEmpty, setInputEmpty] = useState(true);
+  const hasAutoTitled = useRef(false);
+  const isFree = plan === 'free';
+  const atLimit = isFree && messageCount >= messageLimit;
 
+  // The body thunk below is invoked by the transport at request time, not
+  // during render, so reading conversationIdRef.current there is safe.
+  // The ref pattern is deliberate: recreating the transport on every
+  // conversation change would break useChat mid-stream (see CLAUDE.md).
+  /* eslint-disable react-hooks/refs */
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/chat',
         body: () => ({ conversation_id: conversationIdRef.current }),
       }),
-    []
-  )
+    [],
+  );
+  /* eslint-enable react-hooks/refs */
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport,
@@ -70,53 +76,55 @@ export function ChatInterface({
     onFinish: async () => {
       // Auto-title after first assistant response
       if (conversationId && !hasAutoTitled.current && messages.length <= 2) {
-        hasAutoTitled.current = true
-        const firstUserMsg = messages.find((m) => m.role === 'user')
+        hasAutoTitled.current = true;
+        const firstUserMsg = messages.find((m) => m.role === 'user');
         if (firstUserMsg) {
-          const textPart = firstUserMsg.parts.find((p) => p.type === 'text')
+          const textPart = firstUserMsg.parts.find((p) => p.type === 'text');
           if (textPart && textPart.type === 'text') {
-            const title = textPart.text.slice(0, 50) + (textPart.text.length > 50 ? '...' : '')
-            await updateConversationTitle(conversationId, title)
+            const title =
+              textPart.text.slice(0, 50) +
+              (textPart.text.length > 50 ? '...' : '');
+            await updateConversationTitle(conversationId, title);
             setConversations((prev) =>
-              prev.map((c) => (c.id === conversationId ? { ...c, title } : c))
-            )
+              prev.map((c) => (c.id === conversationId ? { ...c, title } : c)),
+            );
           }
         }
       }
     },
     onError: (error) => {
       if (error.message?.includes('403')) {
-        setLimitReached(true)
+        setLimitReached(true);
       }
-      console.error('Chat error:', error)
+      console.error('Chat error:', error);
     },
-  })
+  });
 
-  const isStreaming = status === 'streaming' || status === 'submitted'
+  const isStreaming = status === 'streaming' || status === 'submitted';
 
   // Auto-scroll on new messages
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages])
+  }, [messages]);
 
   // Focus input on mount
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [conversationId])
+    inputRef.current?.focus();
+  }, [conversationId]);
 
   async function handleSubmit(e: { preventDefault?: () => void }) {
-    e.preventDefault?.()
-    const text = inputRef.current?.value.trim()
-    if (!text || isStreaming || atLimit || limitReached) return
+    e.preventDefault?.();
+    const text = inputRef.current?.value.trim();
+    if (!text || isStreaming || atLimit || limitReached) return;
 
-    let currentConversationId = conversationId
+    let currentConversationId = conversationId;
 
     // Create a new conversation if needed
     if (!currentConversationId) {
-      currentConversationId = await createConversation()
-      setConversationId(currentConversationId)
+      currentConversationId = await createConversation();
+      setConversationId(currentConversationId);
       setConversations((prev) => [
         {
           id: currentConversationId!,
@@ -126,51 +134,48 @@ export function ChatInterface({
           updated_at: new Date().toISOString(),
         },
         ...prev,
-      ])
-      hasAutoTitled.current = false
+      ]);
+      hasAutoTitled.current = false;
     }
 
-    inputRef.current!.value = ''
-    setInputEmpty(true)
-    if (isFree) setMessageCount((c) => c + 1)
+    inputRef.current!.value = '';
+    setInputEmpty(true);
+    if (isFree) setMessageCount((c) => c + 1);
     sendMessage({
       text,
-    })
+    });
   }
 
   function handleNewChat() {
-    setConversationId(null)
-    setMessages([])
-    hasAutoTitled.current = false
-    router.push('/chat')
+    setConversationId(null);
+    setMessages([]);
+    hasAutoTitled.current = false;
+    router.push('/chat');
   }
 
   function handleSelectConversation(id: string) {
-    setConversationId(id)
-    router.push(`/chat?conversation=${id}`)
+    setConversationId(id);
+    router.push(`/chat?conversation=${id}`);
   }
 
-  async function handleDeleteConversation(
-    e: React.MouseEvent,
-    id: string
-  ) {
-    e.stopPropagation()
+  async function handleDeleteConversation(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
     if (deletingId !== id) {
-      setDeletingId(id)
-      return
+      setDeletingId(id);
+      return;
     }
-    setDeletingId(null)
-    await deleteConversation(id)
-    setConversations((prev) => prev.filter((c) => c.id !== id))
+    setDeletingId(null);
+    await deleteConversation(id);
+    setConversations((prev) => prev.filter((c) => c.id !== id));
     if (conversationId === id) {
-      handleNewChat()
+      handleNewChat();
     }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
+      e.preventDefault();
+      handleSubmit(e);
     }
   }
 
@@ -180,7 +185,7 @@ export function ChatInterface({
       <div
         className={`${
           sidebarOpen ? 'w-64' : 'w-0'
-        } flex-shrink-0 overflow-hidden border-r border-zinc-200/80 bg-white transition-all dark:border-zinc-800/80 dark:bg-zinc-950`}
+        } shrink-0 overflow-hidden border-r border-zinc-200/80 bg-white transition-all dark:border-zinc-800/80 dark:bg-zinc-950`}
       >
         <div className="flex h-full w-64 flex-col">
           <div className="flex items-center justify-between p-3">
@@ -197,8 +202,8 @@ export function ChatInterface({
               <div
                 key={conv.id}
                 onClick={() => {
-                  setDeletingId(null)
-                  handleSelectConversation(conv.id)
+                  setDeletingId(null);
+                  handleSelectConversation(conv.id);
                 }}
                 className={`group flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   conversationId === conv.id
@@ -294,10 +299,10 @@ export function ChatInterface({
                       key={prompt}
                       onClick={() => {
                         if (inputRef.current) {
-                          inputRef.current.value = prompt
-                          setInputEmpty(false)
+                          inputRef.current.value = prompt;
+                          setInputEmpty(false);
                         }
-                        handleSubmit({})
+                        handleSubmit({});
                       }}
                       className="rounded-xl border border-zinc-300 px-4 py-3 text-left text-sm text-zinc-600 transition-colors hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800/50"
                     >
@@ -310,15 +315,16 @@ export function ChatInterface({
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-            {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-1 rounded-2xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.3s]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.15s]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" />
+            {isStreaming &&
+              messages[messages.length - 1]?.role !== 'assistant' && (
+                <div className="flex justify-start">
+                  <div className="flex items-center gap-1 rounded-2xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.3s]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.15s]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
 
@@ -377,5 +383,5 @@ export function ChatInterface({
         </div>
       </div>
     </div>
-  )
+  );
 }

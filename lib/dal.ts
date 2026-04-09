@@ -41,5 +41,7 @@ export const getSubscription = cache(async (): Promise<Subscription | null> => {
     .select('*')
     .eq('user_id', user.id)
     .single()
-  return data
+  // Cast: plan/status are text columns at the DB level but the app enforces
+  // a closed set of values via Stripe webhook handlers.
+  return data as Subscription | null
 })

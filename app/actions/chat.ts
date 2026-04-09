@@ -51,7 +51,9 @@ export async function getMessages(conversationId: string): Promise<Message[]> {
     throw new Error('Failed to load messages')
   }
 
-  return data ?? []
+  // Cast: messages.role is text at the DB level but the app only ever
+  // writes 'user' or 'assistant'.
+  return (data ?? []) as Message[]
 }
 
 export async function deleteConversation(conversationId: string): Promise<void> {

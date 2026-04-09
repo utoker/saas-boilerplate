@@ -1,31 +1,28 @@
 'use client'
 
 import type { UIMessage } from 'ai'
+import dynamic from 'next/dynamic'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { Components } from 'react-markdown'
+
+// Lazy-load the syntax highlighter + Prism theme so non-code messages
+// (and the initial chat page load) don't pay its ~50KB+ cost.
+const CodeBlock = dynamic(() => import('./code-block').then((m) => m.CodeBlock), {
+  ssr: false,
+  loading: () => (
+    <pre className="my-2 overflow-x-auto rounded-lg bg-zinc-900 p-3 text-[0.8125rem] text-zinc-200">
+      <code />
+    </pre>
+  ),
+})
 
 const markdownComponents: Components = {
   code({ className, children, ...props }) {
     const match = /language-(\w+)/.exec(className || '')
     const code = String(children).replace(/\n$/, '')
     if (match) {
-      return (
-        <SyntaxHighlighter
-          style={oneDark}
-          language={match[1]}
-          PreTag="div"
-          customStyle={{
-            margin: '0.5rem 0',
-            borderRadius: '0.5rem',
-            fontSize: '0.8125rem',
-          }}
-        >
-          {code}
-        </SyntaxHighlighter>
-      )
+      return <CodeBlock language={match[1]} code={code} />
     }
     return (
       <code

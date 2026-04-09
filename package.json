@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:types": "supabase gen types typescript --linked --schema public > lib/types/database.generated.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",

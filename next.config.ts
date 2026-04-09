@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    optimizePackageImports: [
+      'recharts',
+      'react-syntax-highlighter',
+      'ai',
+      '@ai-sdk/react',
+    ],
+  },
 };
 
 export default nextConfig;

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { getUser, getProfile, getSubscription } from '@/lib/dal'
 import { getMonthlyMessageCount } from '@/app/actions/billing'
 import { getMessagesPerDay, getRecentActivity } from '@/app/actions/dashboard'
@@ -8,14 +9,26 @@ import { ActivityFeed } from './_components/activity-feed'
 
 export const metadata = { title: 'Dashboard' }
 
+async function UsageChartSection() {
+  const messagesPerDay = await getMessagesPerDay()
+  return <UsageChart data={messagesPerDay} />
+}
+
+async function ActivityFeedSection() {
+  const recentActivity = await getRecentActivity()
+  return <ActivityFeed events={recentActivity} />
+}
+
+function SectionSkeleton({ className = 'h-40' }: { className?: string }) {
+  return <div className={`${className} animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800/60`} />
+}
+
 export default async function DashboardPage() {
-  const [user, profile, subscription, messageCount, messagesPerDay, recentActivity] = await Promise.all([
+  const [user, profile, subscription, messageCount] = await Promise.all([
     getUser(),
     getProfile(),
     getSubscription(),
     getMonthlyMessageCount(),
-    getMessagesPerDay(),
-    getRecentActivity(),
   ])
 
   const plan = subscription?.plan ?? 'free'
@@ -126,7 +139,9 @@ export default async function DashboardPage() {
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Usage Overview</h2>
         <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <p className="mb-4 text-xs text-zinc-400 dark:text-zinc-500">Messages sent per day (last 14 days)</p>
-          <UsageChart data={messagesPerDay} />
+          <Suspense fallback={<SectionSkeleton className="h-48" />}>
+            <UsageChartSection />
+          </Suspense>
         </div>
       </div>
 
@@ -134,7 +149,9 @@ export default async function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Recent Activity</h2>
         <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <ActivityFeed events={recentActivity} />
+          <Suspense fallback={<SectionSkeleton className="h-32" />}>
+            <ActivityFeedSection />
+          </Suspense>
         </div>
       </div>
     </div>

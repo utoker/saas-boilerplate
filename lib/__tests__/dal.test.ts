@@ -41,7 +41,9 @@ describe('getUser', () => {
   it('returns null on auth error', async () => {
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: null },
-      error: { message: 'Invalid token' },
+      // Partial AuthError — the production code only reads `error` as a
+      // truthy check, so shape fidelity doesn't matter here.
+      error: { message: 'Invalid token' } as unknown as import('@supabase/supabase-js').AuthError,
     })
 
     const user = await getUser()

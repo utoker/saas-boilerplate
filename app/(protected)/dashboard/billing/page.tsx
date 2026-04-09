@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getSubscription } from '@/lib/dal'
 import {
   getMonthlyMessageCount,
@@ -43,22 +44,16 @@ function CheckIcon() {
   )
 }
 
-export default async function BillingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ success?: string }>
-}) {
-  const params = await searchParams
-  const [subscription, messageCount, billingUsage, invoices] = await Promise.all([
-    getSubscription(),
-    getMonthlyMessageCount(),
-    getBillingPeriodUsage(),
-    getInvoices(),
-  ])
+function SectionSkeleton({ className = 'h-40' }: { className?: string }) {
+  return (
+    <div
+      className={`${className} animate-pulse rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}
+    />
+  )
+}
 
-  const plan = subscription?.plan ?? 'free'
-  const isPro = plan === 'pro'
-
+async function BillingPeriodSection() {
+  const billingUsage = await getBillingPeriodUsage()
   const periodStartFormatted = new Date(billingUsage.periodStart).toLocaleDateString(
     'en-US',
     { month: 'short', day: 'numeric' }
@@ -67,6 +62,127 @@ export default async function BillingPage({
     'en-US',
     { month: 'short', day: 'numeric', year: 'numeric' }
   )
+  return (
+    <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="p-6">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          Usage This Billing Period
+        </h2>
+        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+          {periodStartFormatted} &ndash; {periodEndFormatted}
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+            <p className="text-2xl font-semibold">{billingUsage.messageCount}</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              AI messages sent
+            </p>
+          </div>
+          <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+            <p className="text-2xl font-semibold">{billingUsage.conversationCount}</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Conversations created
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+async function InvoiceHistorySection({
+  hasCustomer,
+}: {
+  hasCustomer: boolean
+}) {
+  const invoices = await getInvoices()
+
+  if (invoices.length > 0) {
+    return (
+      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            Invoice History
+          </h2>
+          <div className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800/50">
+            {invoices.map((invoice) => (
+              <div
+                key={invoice.id}
+                className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+              >
+                <div>
+                  <p className="text-sm font-medium">
+                    {new Date(invoice.date * 1000).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    ${(invoice.amount / 100).toFixed(2)}{' '}
+                    {invoice.currency.toUpperCase()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      invoice.status === 'paid'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
+                    }`}
+                  >
+                    {invoice.status === 'paid' ? 'Paid' : 'Pending'}
+                  </span>
+                  {invoice.pdfUrl && (
+                    <a
+                      href={invoice.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Download
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (hasCustomer) {
+    return (
+      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            Invoice History
+          </h2>
+          <p className="mt-4 text-sm text-zinc-400 dark:text-zinc-500">
+            No invoices yet. Your first invoice will appear here after your next billing cycle.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>
+}) {
+  const [params, subscription, messageCount] = await Promise.all([
+    searchParams,
+    getSubscription(),
+    getMonthlyMessageCount(),
+  ])
+
+  const plan = subscription?.plan ?? 'free'
+  const isPro = plan === 'pro'
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-8">
@@ -147,95 +263,14 @@ export default async function BillingPage({
       </div>
 
       {/* Usage This Billing Period */}
-      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="p-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            Usage This Billing Period
-          </h2>
-          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-            {periodStartFormatted} &ndash; {periodEndFormatted}
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
-              <p className="text-2xl font-semibold">{billingUsage.messageCount}</p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                AI messages sent
-              </p>
-            </div>
-            <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
-              <p className="text-2xl font-semibold">{billingUsage.conversationCount}</p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Conversations created
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={<SectionSkeleton className="mt-6 h-40" />}>
+        <BillingPeriodSection />
+      </Suspense>
 
-      {/* Invoice History */}
-      {invoices.length > 0 ? (
-        <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="p-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              Invoice History
-            </h2>
-            <div className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800/50">
-              {invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium">
-                      {new Date(invoice.date * 1000).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                      ${(invoice.amount / 100).toFixed(2)}{' '}
-                      {invoice.currency.toUpperCase()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        invoice.status === 'paid'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
-                      }`}
-                    >
-                      {invoice.status === 'paid' ? 'Paid' : 'Pending'}
-                    </span>
-                    {invoice.pdfUrl && (
-                      <a
-                        href={invoice.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        Download
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : subscription?.stripe_customer_id ? (
-        <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="p-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              Invoice History
-            </h2>
-            <p className="mt-4 text-sm text-zinc-400 dark:text-zinc-500">
-              No invoices yet. Your first invoice will appear here after your next billing cycle.
-            </p>
-          </div>
-        </div>
-      ) : null}
+      {/* Invoice History (Stripe — slowest fetch, isolated so the rest paints first) */}
+      <Suspense fallback={<SectionSkeleton className="mt-6 h-48" />}>
+        <InvoiceHistorySection hasCustomer={!!subscription?.stripe_customer_id} />
+      </Suspense>
 
       {/* Plan Comparison */}
       <div className="mt-6">

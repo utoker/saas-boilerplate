@@ -1,46 +1,36 @@
-export type Profile = {
-  id: string
-  display_name: string | null
-  avatar_url: string | null
-  created_at: string
-  updated_at: string
-}
+// Public aliases for consumers. Derived from the generated schema types
+// in ./database.generated.ts so there's a single source of truth for DB
+// shapes. A few `text` columns are narrowed to literal unions where the
+// application enforces a closed set of values (role, plan, status).
 
-export type Conversation = {
-  id: string
-  user_id: string
-  title: string
-  created_at: string
-  updated_at: string
-}
+import type { Database } from './database.generated'
 
-export type Message = {
-  id: string
-  conversation_id: string
-  role: 'user' | 'assistant'
-  content: string
-  input_tokens: number | null
-  output_tokens: number | null
-  created_at: string
-}
+export type { Database }
+
+type Tables = Database['public']['Tables']
+
+export type Profile = Tables['profiles']['Row']
+export type Conversation = Tables['conversations']['Row']
 
 export type Plan = 'free' | 'pro'
-
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete'
 
-export type Subscription = {
-  id: string
-  user_id: string
-  stripe_customer_id: string | null
-  stripe_subscription_id: string | null
-  plan: Plan
-  status: SubscriptionStatus
-  current_period_start: string | null
-  current_period_end: string | null
-  created_at: string
-  updated_at: string
+// `messages.role`, `subscriptions.plan`, and `subscriptions.status` are
+// plain `text` columns in Postgres, so the generator emits `string`.
+// Narrow them here to preserve the union types the app code relies on.
+export type Message = Omit<Tables['messages']['Row'], 'role'> & {
+  role: 'user' | 'assistant'
 }
 
+export type Subscription = Omit<
+  Tables['subscriptions']['Row'],
+  'plan' | 'status'
+> & {
+  plan: Plan
+  status: SubscriptionStatus
+}
+
+// Application type, not DB-backed.
 export type ChatRequest = {
   conversation_id: string
   message: string

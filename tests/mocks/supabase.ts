@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import type { User, AuthError } from '@supabase/supabase-js'
 
 type SupabaseResponse<T = unknown> = {
   data: T | null
@@ -52,8 +53,13 @@ export function createMockSupabase() {
     }),
     rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
     auth: {
+      // Cast widens the inferred literal `null` to the real union types so
+      // tests can `mockResolvedValue` with actual User / AuthError payloads.
       getUser: vi.fn(() =>
-        Promise.resolve({ data: { user: null }, error: null })
+        Promise.resolve({
+          data: { user: null as User | null },
+          error: null as AuthError | null,
+        })
       ),
     },
   }
