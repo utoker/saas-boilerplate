@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FadeInOnScroll } from "@/components/fade-in-on-scroll";
+import { getUser } from "@/lib/dal";
 
 export const metadata: Metadata = {
   title: "LaunchKit — Ship Your SaaS in Days, Not Months",
@@ -163,7 +164,8 @@ function CheckIcon() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const user = await getUser();
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-950">
       {/* Navbar */}
@@ -173,18 +175,29 @@ export default function Home() {
             LaunchKit
           </Link>
           <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
